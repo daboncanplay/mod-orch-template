@@ -1,0 +1,59 @@
+# The main job for {{.project_name}}
+resources:
+  jobs:
+    {{.project_name}}_job_xxxxUSERNAMExxxx:
+        name: {{.project_name}}_job_xxxxUSERNAMExxxx
+        timeout_seconds: 7200
+        tasks:
+          - task_key: Ingest_Source_1
+            notebook_task:
+              notebook_path: ../src/Ingest Source 1.ipynb
+              base_parameters:
+                test_value: "true" 
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+          - task_key: Ingest_Source_2
+            notebook_task:
+              notebook_path: ../src/Ingest Source 2.ipynb
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+          - task_key: Ingest_Source_3
+            notebook_task:
+              notebook_path: ../src/Ingest Source 3.ipynb
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+          - task_key: Clean_Data
+            depends_on:
+              - task_key: Ingest_Source_3
+              - task_key: Ingest_Source_2
+              - task_key: Ingest_Source_1
+            notebook_task:
+              notebook_path: ../src/Clean Data.ipynb
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+          - task_key: Bad_Record_Check
+            depends_on:
+              - task_key: Clean_Data
+            condition_task:
+              op: EQUAL_TO
+              left: "{{ "{{ tasks.Clean_Data.values.bad_records }}" }}"
+              right: "0"
+          - task_key: Fix_Bad_Records
+            depends_on:
+              - task_key: Bad_Record_Check
+                outcome: "false"
+            notebook_task:
+              notebook_path: ../src/Fix Bad Records.ipynb
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+          - task_key: Aggregate_Records
+            depends_on:
+              - task_key: Fix_Bad_Records
+              - task_key: Bad_Record_Check
+                outcome: "true"
+            run_if: AT_LEAST_ONE_SUCCESS
+            notebook_task:
+              notebook_path: ../src/Aggregate Records.ipynb
+              source: WORKSPACE
+            existing_cluster_id: xxxx-xxxxxx-xxxxxxxx
+      
