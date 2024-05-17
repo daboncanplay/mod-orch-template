@@ -26,10 +26,6 @@ resources:
         timeout_seconds: 7200
         tasks:
           - task_key: Clean_Data
-            depends_on:
-              - task_key: Ingest_Source_3
-              - task_key: Ingest_Source_2
-              - task_key: Ingest_Source_1
             notebook_task:
               notebook_path: ../src/Clean Data.ipynb
               source: WORKSPACE
